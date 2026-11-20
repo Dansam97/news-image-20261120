@@ -1,34 +1,52 @@
 #!/usr/bin/env python3
-"""Draw the front page for Friday 20 November 2026 (build time only).
+"""Draw the EVENING front page for Friday 20 November 2026 (build time).
 
 Reads nothing from the network. Renders entry.png with Pillow and the
 system fonts, 1024x1024, deterministically: same code, same bytes.
 
-Stories, all reported 19-20 Nov 2026 and checked against live news
-searches before drawing:
-  * Shenzhen: Trump, Xi and Putin's first three-way summit ends with a
-    four-point "Declaration Towards Peace" and no deal on Ukraine/Iran;
-    the US-China trade truce is extended to 10 January 2027.
-  * The Hague: the ICJ rules 9-6 that Myanmar committed genocide
-    against the Rohingya in 2017 -- the first state ever found guilty
-    by the court; reparations ordered, no appeal. Britain expels
-    Myanmar's defence attache and seeks an urgent UN Security Council
-    meeting; The Gambia, which brought the case in 2019, hails it.
-  * Kerch Bridge: a third Ukrainian strike in four days (Neptune
-    missiles) halts rail traffic; the road arch collapsed into the
-    sea earlier in the week. Putin rejects a ceasefire.
-  * Anthropic: record $81.3bn IPO; ANT opens $111.50, closes $97.17,
-    up 17% on the $83 price; briefly valued near $2 trillion.
-  * GTA VI: out 19 Nov, Metacritic 99 (ties the all-time best),
-    about 17m copies sold before launch, per Sensor Tower.
-  * Voyager 1: first human-made object one light-day from Earth
-    (18 Nov, ~16bn miles); a signal now takes 24 hours.
-  * Cyclone Akvan: landfall due around noon today near Gopalpur,
-    Odisha; 100,000+ people evacuated; winds 90-100 km/h.
-  * Markets strip uses Thursday 19 Nov's close, labelled as such --
-    Friday's US close has not happened at build time.
-  * Sport brief: NZ 243/5 on day one vs India, Nicholls 113*,
-    Phillips 94*, Bumrah 3-52.
+Evening edition: the morning page previewed the day; this page reports
+how Friday actually ended. Every item below was checked against live
+news reporting on Friday evening (WIB) before drawing:
+
+  * Shenzhen, the day after: the four-point "Declaration Towards Peace"
+    signed by Trump, Xi and Putin draws a European backlash. Merz
+    rejects any new Yalta; Denmark's Frederiksen calls the summit
+    "completely incomprehensible"; Putin concedes the text sets no
+    ambitious goals and that nobody will be forced to comply, and says
+    Europe and Ukraine are "not ready to compromise". Trump calls the
+    summit "bigger than Yalta". The one hard result stands: the
+    US-China trade truce is extended to 10 January 2027.
+  * The Hague, the orders: after the ICJ's 9-6 finding that Myanmar
+    committed genocide against the Rohingya, the Court orders
+    investigations and prosecutions, a safe and dignified return,
+    restitution of property and compensation, with a reparations plan
+    due within two years. The Court has no enforcement arm; survivors'
+    groups press the Security Council; Myanmar has not replied.
+  * Kerch Bridge: satellite imagery shows about 225 m of the road deck
+    in the sea; trains resumed Thursday on one of the two tracks after
+    the third strike in four days; free ferries now cross the strait.
+  * Anthropic, day two: ANT slides about 10% to near $87 in Friday
+    trading as AI stocks sell off (intraday, not a close) -- still
+    above the $83 IPO price, a day after closing at $97.17.
+  * GTA VI: Sensor Tower estimates 24.58m copies and $2.36bn on day
+    one (19 Nov) -- the biggest entertainment launch ever, roughly
+    three times GTA V's first day. Take-Two has released no official
+    figures, so the numbers are labelled estimates.
+  * Voyager 1: the one-light-day milestone was confirmed on Thursday
+    by carrier signal and trajectory, but the probe's science and
+    engineering data stream stopped on 14 Nov; engineers investigate.
+  * Cyclone Akvan: landfall near Gopalpur completed by 11:20 on
+    Friday, winds 70-80 km/h gusting to 90; 372,000 people evacuated;
+    no deaths or major damage reported; the storm weakened to a deep
+    depression, with an orange rain alert for 14 districts.
+  * Markets strip uses FRIDAY 20 Nov closes only, each labelled:
+    Asia (Nikkei 56,436.65 -5.06%, Kospi 4,869.96 -5.21%, Hang Seng
+    22,410.80 -1.89%) and Europe (FTSE 100 10,346.34 -1.02%, DAX
+    -2.13%, CAC 40 -1.6%). Friday's US close happens at 04:00 WIB on
+    Saturday and is deliberately NOT used or invented.
+  * Sport, day two at Wellington: New Zealand 368 (Nicholls 175*,
+    Phillips 118, Bumrah 4-92); India 159/1 at stumps (Jaiswal 85,
+    Rahul 52*), trailing by 209.
 """
 import os
 
@@ -134,7 +152,7 @@ canvas = ImageDraw.Draw(img)
 # ---------------------------------------------------------------- top line
 tiny = load(SANSB, 15)
 canvas.text((M, 14), "THE WORLD IN ONE PAGE", font=tiny, fill=INK)
-right = "No. 20  \u2022  FRIDAY EDITION"
+right = "No. 20  \u2022  EVENING EDITION"
 canvas.text((R - canvas.textlength(right, font=tiny), 14), right,
             font=tiny, fill=INK)
 rule(40, 2)
@@ -151,27 +169,26 @@ centre("FRIDAY, 20 NOVEMBER 2026", load(SANSB, 22), 175, fill=CREAM,
        track=2)
 
 # ---------------------------------------------------------------- lead
-canvas.text((M, 218), "APEC  \u2022  SHENZHEN  \u2022  THE FIRST THREE-WAY SUMMIT",
+canvas.text((M, 218), "APEC  \u2022  SHENZHEN  \u2022  THE DAY AFTER THE SUMMIT",
             font=load(SANSB, 17), fill=RED)
-centre("THREE PRESIDENTS,",
-       shrink(BLACK, "THREE PRESIDENTS,", R - M, 78), 242)
-centre("ONE DECLARATION \u2014 NO DEAL",
-       shrink(BLACK, "ONE DECLARATION \u2014 NO DEAL", R - M, 78), 318)
-deck = ("Trump, Xi and Putin talk for about 90 minutes at Kylin Villa and "
-        "issue a four-point \u201cDeclaration Towards Peace\u201d \u2014 but "
-        "settle nothing on Ukraine or Iran.")
+centre("PEACE ON PAPER,",
+       shrink(BLACK, "PEACE ON PAPER,", R - M, 78), 242)
+centre("EUROPE UNCONVINCED",
+       shrink(BLACK, "EUROPE UNCONVINCED", R - M, 78), 318)
+deck = ("A day after Trump, Xi and Putin signed their four-point "
+        "\u201cDeclaration Towards Peace\u201d in Shenzhen, Europe refuses "
+        "to play along \u2014 and Putin concedes the paper binds no one.")
 para(deck, load(ITAL, 21), M + 30, 400, R - M - 60, 27, align_left=False)
 
 # lead lower half: bullets left, three flags right
 ly = 462
 bullet_f = load(REG, 18)
 bullets = [
-    "Four points: UN reform \u2022 more refined oil \u2022 limit the ICC "
-    "\u2022 nuclear-risk talks.",
-    "One concrete result: the US\u2013China trade truce is extended "
-    "to 10 January 2027.",
-    "Trump plans a press conference on Friday about the trip; "
-    "Europe pushes back on the declaration.",
+    "Putin says Kyiv and Europe are \u201cnot ready to compromise\u201d.",
+    "Berlin answers back: Merz rejects any new Yalta; Denmark\u2019s "
+    "Frederiksen calls the summit \u201ccompletely incomprehensible\u201d.",
+    "Trump hails Shenzhen as \u201cbigger than Yalta\u201d. The one hard "
+    "result stands: the US\u2013China trade truce now runs to 10 January 2027.",
 ]
 for b in bullets:
     canvas.text((M, ly), "\u2022", font=bullet_f, fill=RED)
@@ -225,10 +242,10 @@ canvas.text((M + 16, iy0 + 10), "THE HAGUE  \u2022  INTERNATIONAL COURT OF JUSTI
 centre("MYANMAR COMMITTED GENOCIDE",
        shrink(BOLD, "MYANMAR COMMITTED GENOCIDE", R - M - 32, 38),
        iy0 + 30, fill=CREAM)
-icj = ("9\u20136 ruling \u2014 the first time the World Court has found a "
-       "state guilty of genocide, over the 2017 Rohingya campaign. "
-       "Reparations ordered; final, no appeal. Britain expels Myanmar\u2019s "
-       "defence attach\u00e9.")
+icj = ("Now the orders: prosecute the suspects, let the Rohingya return "
+       "in safety, restore property, pay compensation \u2014 with a "
+       "reparations plan due within two years. The Court cannot enforce "
+       "it; survivors press the Security Council. Naypyidaw is silent.")
 para(icj, load(REG, 16), M + 16, iy0 + 72, R - M - 32, 19, fill=CREAM)
 
 # ---------------------------------------------------------------- picture grid
@@ -302,41 +319,42 @@ def icon_voyager(x0, y0):
     canvas.line([(x0 + 56, y0 + 38), (x0 + 70, y0 + 26)], fill=GOLD, width=2)
 
 
-cell(M, gy, "WAR  \u2022  UKRAINE", "KERCH BRIDGE HIT AGAIN",
-     "Third strike in four days: Neptune missiles halt rail traffic; "
-     "the road arch fell into the sea this week.", icon_kerch)
+cell(M, gy, "WAR  \u2022  UKRAINE", "KERCH: ONE TRACK BACK",
+     "Road deck down \u2014 some 225 m in the sea. Trains resumed on "
+     "one track; ferries now carry the strait.", icon_kerch)
 cell(M + col_w + 24, gy, "BUSINESS  \u2022  WALL STREET",
-     "ANTHROPIC'S $81bn DEBUT",
-     "ANT opens $111.50, closes $97.17 \u2014 up 17% on its $83 price. "
-     "Largest IPO ever; briefly worth $2tn.", icon_anthropic)
-cell(M, gy + cell_h + 8, "CULTURE  \u2022  GAMES", "GTA VI IS OUT \u2014 99",
-     "Vice City returns after 13 years. Metacritic 99 ties the "
-     "all-time best; ~17m copies sold pre-launch.", icon_gta)
+     "ANTHROPIC\u2019S DAY-TWO SLIDE",
+     "ANT drops about 10% to near $87 in Friday trade as AI shares "
+     "slide \u2014 still above the $83 IPO price.", icon_anthropic)
+cell(M, gy + cell_h + 8, "CULTURE  \u2022  GAMES", "GTA VI: $2.36bn IN A DAY",
+     "Sensor Tower counts 24.6m copies on day one \u2014 the biggest "
+     "entertainment launch ever. Unofficial.", icon_gta)
 cell(M + col_w + 24, gy + cell_h + 8, "SCIENCE  \u2022  SPACE",
-     "VOYAGER 1: A LIGHT-DAY OUT",
-     "NASA's 1977 probe passes 16bn miles \u2014 the first human-made "
-     "object so far. A signal takes 24 hours.", icon_voyager)
+     "VOYAGER 1 PHONES HOME",
+     "Light-day confirmed by carrier signal \u2014 but its data stream "
+     "halted on 14 Nov. Engineers investigate.", icon_voyager)
 
 # ---------------------------------------------------------------- Akvan strip
 ay = 936
 canvas.rectangle([M, ay, R, ay + 34], fill=AMBER)
-centre("CYCLONE AKVAN LANDFALL TODAY \u2014 NOON NEAR GOPALPUR  \u2022  "
-       "100,000+ EVACUATED  \u2022  WINDS 90\u2013100 KM/H",
-       load(SANSB, 15), ay + 9, fill=CREAM)
+akvan = ("CYCLONE AKVAN ASHORE AT GOPALPUR \u2014 NO DEATHS, NO MAJOR DAMAGE  "
+         "\u2022  372,000 EVACUATED  \u2022  NOW A DEEP DEPRESSION")
+centre(akvan, shrink(SANSB, akvan, R - M, 15, floor=11), ay + 9, fill=CREAM)
 
 # ---------------------------------------------------------------- markets
 my = 980
-tick = ("THURSDAY CLOSE (19 NOV):  DOW 49,097 \u20132.19%  \u2022  "
-        "S&P 7,176 \u20132.02%  \u2022  NASDAQ 23,879 \u20132.25%  \u2022  "
-        "ANT $97.17 +17%")
-centre(tick, load(SANS, 14), my, fill=FAINT)
+tick = ("FRIDAY CLOSE (20 NOV):  NIKKEI 56,437 \u22125.1%  \u2022  "
+        "KOSPI 4,870 \u22125.2%  \u2022  HANG SENG 22,411 \u22121.9%  "
+        "\u2022  FTSE 100 10,346 \u22121.0%  \u2022  DAX \u22122.1%  "
+        "\u2022  CAC 40 \u22121.6%")
+centre(tick, shrink(SANS, tick, R - M, 14), my, fill=FAINT)
 
 # ---------------------------------------------------------------- footer briefs
 fy = 1002
-brief = ("SEOUL: top court overturns ex-PM Han's 15-year term in part  "
-         "\u2022  BERLIN: US envoys meet Zelensky  \u2022  SPORT: Nicholls "
-         "113*, NZ 243/5 v India")
-centre(brief, load(SANS, 12), fy, fill=GREY)
+brief = ("WELLINGTON: Nicholls 175*, NZ 368; India 159/1 trail by 209  "
+         "\u2022  KERCH: free ferries cross the strait  \u2022  ODISHA: "
+         "orange rain alert, 14 districts, into Saturday")
+centre(brief, shrink(SANS, brief, R - M, 12), fy, fill=GREY)
 
 img.save(OUT, optimize=True)
 print("saved", OUT)
