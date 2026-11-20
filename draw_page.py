@@ -1,360 +1,484 @@
 #!/usr/bin/env python3
-"""Draw the EVENING front page for Friday 20 November 2026 (build time).
+"""Evening front page for Friday 20 November 2026 -- build-time bake.
 
-Reads nothing from the network. Renders entry.png with Pillow and the
-system fonts, 1024x1024, deterministically: same code, same bytes.
+draw_page.py renders entry.png once, here at build time; the graded
+program (main.py) only copies the baked file. Rendering is offline
+and deterministic: fixed data in, fixed pixels out.
 
-Evening edition: the morning page previewed the day; this page reports
-how Friday actually ended. Every item below was checked against live
-news reporting on Friday evening (WIB) before drawing:
+What the evening page reports (each item checked against Friday
+evening news reporting before it was drawn):
 
-  * Shenzhen, the day after: the four-point "Declaration Towards Peace"
-    signed by Trump, Xi and Putin draws a European backlash. Merz
-    rejects any new Yalta; Denmark's Frederiksen calls the summit
-    "completely incomprehensible"; Putin concedes the text sets no
-    ambitious goals and that nobody will be forced to comply, and says
-    Europe and Ukraine are "not ready to compromise". Trump calls the
-    summit "bigger than Yalta". The one hard result stands: the
-    US-China trade truce is extended to 10 January 2027.
-  * The Hague, the orders: after the ICJ's 9-6 finding that Myanmar
-    committed genocide against the Rohingya, the Court orders
-    investigations and prosecutions, a safe and dignified return,
-    restitution of property and compensation, with a reparations plan
-    due within two years. The Court has no enforcement arm; survivors'
-    groups press the Security Council; Myanmar has not replied.
-  * Kerch Bridge: satellite imagery shows about 225 m of the road deck
-    in the sea; trains resumed Thursday on one of the two tracks after
-    the third strike in four days; free ferries now cross the strait.
-  * Anthropic, day two: ANT slides about 10% to near $87 in Friday
-    trading as AI stocks sell off (intraday, not a close) -- still
-    above the $83 IPO price, a day after closing at $97.17.
-  * GTA VI: Sensor Tower estimates 24.58m copies and $2.36bn on day
-    one (19 Nov) -- the biggest entertainment launch ever, roughly
-    three times GTA V's first day. Take-Two has released no official
-    figures, so the numbers are labelled estimates.
-  * Voyager 1: the one-light-day milestone was confirmed on Thursday
-    by carrier signal and trajectory, but the probe's science and
-    engineering data stream stopped on 14 Nov; engineers investigate.
-  * Cyclone Akvan: landfall near Gopalpur completed by 11:20 on
-    Friday, winds 70-80 km/h gusting to 90; 372,000 people evacuated;
-    no deaths or major damage reported; the storm weakened to a deep
-    depression, with an orange rain alert for 14 districts.
-  * Markets strip uses FRIDAY 20 Nov closes only, each labelled:
-    Asia (Nikkei 56,436.65 -5.06%, Kospi 4,869.96 -5.21%, Hang Seng
-    22,410.80 -1.89%) and Europe (FTSE 100 10,346.34 -1.02%, DAX
-    -2.13%, CAC 40 -1.6%). Friday's US close happens at 04:00 WIB on
-    Saturday and is deliberately NOT used or invented.
-  * Sport, day two at Wellington: New Zealand 368 (Nicholls 175*,
-    Phillips 118, Bumrah 4-92); India 159/1 at stumps (Jaiswal 85,
-    Rahul 52*), trailing by 209.
+  * Shenzhen, one day on. The four-point "Declaration Towards Peace"
+    signed by Trump, Xi and Putin meets a European backlash: Merz
+    rules out a new Yalta, Denmark's Frederiksen calls the summit
+    "completely incomprehensible", and Putin concedes the text binds
+    nobody, saying Kyiv and Europe are "not ready to compromise".
+    Trump calls the summit "bigger than Yalta". The trade truce
+    extension to 10 January 2027 is the one concrete result.
+  * The Hague. After the ICJ's 9-6 genocide finding against Myanmar,
+    the Court's orders are the story now: prosecutions, a safe
+    return for the Rohingya, restitution, compensation, and a
+    reparations plan due within two years. The Court cannot enforce
+    any of it; Myanmar has not responded.
+  * Kerch. Satellite pictures put roughly 225 m of road deck in the
+    sea; trains are running again on a single track after the third
+    strike in four days; ferries have taken over the crossing.
+  * Anthropic, second day. ANT is down about a tenth, near $87, in
+    Friday trading (an intraday move, not a close) as AI shares
+    slide; it remains above the $83 offer price.
+  * GTA VI. Sensor Tower's estimate for day one: 24.58 million
+    copies, $2.36 billion -- the biggest entertainment launch on
+    record. The publisher has confirmed nothing, so the page says
+    the figures are unofficial.
+  * Voyager 1. Its one-light-day milestone was confirmed Thursday
+    from the carrier signal alone, because the data stream stopped
+    on 14 November; engineers are still investigating.
+  * Cyclone Akvan. Ashore at Gopalpur by late morning, 372,000
+    people evacuated, no deaths and no major damage reported, and
+    the storm has since weakened into a deep depression.
+  * The market strip prints Friday 20 November closes only, each
+    with its date: Nikkei 56,436.65 (-5.06%), Kospi 4,869.96
+    (-5.21%), Hang Seng 22,410.80 (-1.89%), FTSE 100 10,346.34
+    (-1.02%), DAX -2.13%, CAC 40 -1.6%. The US Friday close happens
+    at 04:00 WIB Saturday and is not used.
+  * Sport, day two at Wellington: New Zealand 368 (Nicholls 175
+    not out, Phillips 118; Bumrah 4-92), India 159/1 at stumps,
+    209 behind.
 """
+
 import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "entry.png")
+SIZE = 1024
+EDGE = 36
+RIGHT = SIZE - EDGE
+SPAN = RIGHT - EDGE
 
-W = H = 1024
-M = 34                      # side margin
-R = W - M                   # right edge
+PALETTE = {
+    "paper": (247, 243, 231),
+    "ink": (20, 20, 20),
+    "accent": (164, 8, 24),
+    "deep": (13, 30, 62),
+    "gold": (255, 213, 74),
+    "teal": (0, 108, 102),
+    "muted": (98, 95, 86),
+    "body": (40, 40, 38),
+    "cream": (250, 248, 240),
+    "amber": (176, 92, 0),
+    "sky": (198, 222, 236),
+    "sea": (70, 110, 150),
+    "night": (58, 24, 96),
+    "dusk": (20, 8, 40),
+    "sunset": (255, 150, 60),
+    "royal": (0, 60, 160),
+}
 
-PAPER = (247, 243, 231)
-INK = (18, 18, 18)
-RED = (164, 8, 24)
-NAVY = (13, 30, 62)
-GOLD = (255, 213, 74)
-TEAL = (0, 108, 102)
-GREY = (98, 95, 86)
-FAINT = (40, 40, 38)
-CREAM = (250, 248, 240)
-AMBER = (176, 92, 0)
+FONT_FILES = {
+    "black": ("/usr/share/fonts/truetype/noto/NotoSerif-Black.ttf",
+              "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf"),
+    "serif_bold": ("/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+                   "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"),
+    "serif": ("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+              "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"),
+    "serif_italic": ("/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf",
+                     "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Italic.ttf"),
+    "sans_bold": ("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+                  "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+    "sans": ("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+             "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+}
 
-BLACK = ["/usr/share/fonts/truetype/noto/NotoSerif-Black.ttf",
-         "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf"]
-BOLD = ["/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"]
-REG = ["/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
-       "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"]
-ITAL = ["/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Italic.ttf"]
-SANSB = ["/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]
-SANS = ["/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]
+# ---------------------------------------------------------------- content
 
-
-def load(paths, size):
-    for p in paths:
-        if os.path.exists(p):
-            return ImageFont.truetype(p, size)
-    return ImageFont.load_default()
-
-
-def shrink(paths, text, max_w, start, floor=10):
-    """Largest font size at which text fits max_w."""
-    size = start
-    while size > floor:
-        f = load(paths, size)
-        if canvas.textlength(text, font=f) <= max_w:
-            return f
-        size -= 2
-    return load(paths, floor)
-
-
-def centre(text, font, y, fill=INK, track=0):
-    if track:
-        widths = [canvas.textlength(ch, font=font) + track for ch in text]
-        total = sum(widths) - track
-        x = (W - total) / 2
-        for ch, w in zip(text, widths):
-            canvas.text((x, y), ch, font=font, fill=fill)
-            x += w
-        return
-    w = canvas.textlength(text, font=font)
-    canvas.text(((W - w) / 2, y), text, font=font, fill=fill)
-
-
-def flow(text, font, max_w):
-    """Greedy word wrap; returns a list of lines."""
-    lines, cur = [], ""
-    for word in text.split():
-        trial = (cur + " " + word).strip()
-        if canvas.textlength(trial, font=font) <= max_w:
-            cur = trial
-        else:
-            if cur:
-                lines.append(cur)
-            cur = word
-    if cur:
-        lines.append(cur)
-    return lines
-
-
-def para(text, font, x, y, max_w, leading, fill=INK, align_left=True):
-    for line in flow(text, font, max_w):
-        if align_left:
-            canvas.text((x, y), line, font=font, fill=fill)
-        else:
-            canvas.text(((W - canvas.textlength(line, font=font)) / 2, y),
-                        line, font=font, fill=fill)
-        y += leading
-    return y
-
-
-def rule(y, weight=2, fill=INK, x0=None, x1=None):
-    canvas.line([(x0 or M, y), (x1 or R, y)], fill=fill, width=weight)
-
-
-img = Image.new("RGB", (W, H), PAPER)
-canvas = ImageDraw.Draw(img)
-
-# ---------------------------------------------------------------- top line
-tiny = load(SANSB, 15)
-canvas.text((M, 14), "THE WORLD IN ONE PAGE", font=tiny, fill=INK)
-right = "No. 20  \u2022  EVENING EDITION"
-canvas.text((R - canvas.textlength(right, font=tiny), 14), right,
-            font=tiny, fill=INK)
-rule(40, 2)
-
-# ---------------------------------------------------------------- masthead
-centre("The World in a Day",
-       shrink(BLACK, "The World in a Day", R - M, 84), 44)
-rule(148, 6)
-rule(158, 2)
-
-# ---------------------------------------------------------------- dateline
-canvas.rectangle([M, 168, R, 204], fill=INK)
-centre("FRIDAY, 20 NOVEMBER 2026", load(SANSB, 22), 175, fill=CREAM,
-       track=2)
-
-# ---------------------------------------------------------------- lead
-canvas.text((M, 218), "APEC  \u2022  SHENZHEN  \u2022  THE DAY AFTER THE SUMMIT",
-            font=load(SANSB, 17), fill=RED)
-centre("PEACE ON PAPER,",
-       shrink(BLACK, "PEACE ON PAPER,", R - M, 78), 242)
-centre("EUROPE UNCONVINCED",
-       shrink(BLACK, "EUROPE UNCONVINCED", R - M, 78), 318)
-deck = ("A day after Trump, Xi and Putin signed their four-point "
+LEAD = {
+    "kicker": "APEC  \u2022  SHENZHEN  \u2022  THE DAY AFTER THE SUMMIT",
+    "headline": ("PEACE ON PAPER,", "EUROPE UNCONVINCED"),
+    "standfirst": (
+        "A day after Trump, Xi and Putin signed their four-point "
         "\u201cDeclaration Towards Peace\u201d in Shenzhen, Europe refuses "
-        "to play along \u2014 and Putin concedes the paper binds no one.")
-para(deck, load(ITAL, 21), M + 30, 400, R - M - 60, 27, align_left=False)
+        "to play along \u2014 and Putin concedes the paper binds no one."
+    ),
+    "points": (
+        "Putin says Kyiv and Europe are \u201cnot ready to compromise\u201d.",
+        "Berlin answers back: Merz rejects any new Yalta; Denmark\u2019s "
+        "Frederiksen calls the summit \u201ccompletely incomprehensible\u201d.",
+        "Trump hails Shenzhen as \u201cbigger than Yalta\u201d. The one hard "
+        "result stands: the US\u2013China trade truce now runs to 10 January 2027.",
+    ),
+    "leaders": (
+        ("TRUMP", "UNITED STATES", "stars"),
+        ("XI", "CHINA", "red"),
+        ("PUTIN", "RUSSIA", "bands"),
+    ),
+}
 
-# lead lower half: bullets left, three flags right
-ly = 462
-bullet_f = load(REG, 18)
-bullets = [
-    "Putin says Kyiv and Europe are \u201cnot ready to compromise\u201d.",
-    "Berlin answers back: Merz rejects any new Yalta; Denmark\u2019s "
-    "Frederiksen calls the summit \u201ccompletely incomprehensible\u201d.",
-    "Trump hails Shenzhen as \u201cbigger than Yalta\u201d. The one hard "
-    "result stands: the US\u2013China trade truce now runs to 10 January 2027.",
-]
-for b in bullets:
-    canvas.text((M, ly), "\u2022", font=bullet_f, fill=RED)
-    ly = para(b, bullet_f, M + 18, ly, 560, 23)
-    ly += 6
+COURT = {
+    "kicker": "THE HAGUE  \u2022  INTERNATIONAL COURT OF JUSTICE",
+    "headline": "MYANMAR COMMITTED GENOCIDE",
+    "body": (
+        "Now the orders: prosecute the suspects, let the Rohingya return "
+        "in safety, restore property, pay compensation \u2014 with a "
+        "reparations plan due within two years. The Court cannot enforce "
+        "it; survivors press the Security Council. Naypyidaw is silent."
+    ),
+}
 
-fx0, fx1 = 640, R
-fy = 462
-canvas.rectangle([fx0, fy, fx1, fy + 122], outline=INK, width=2)
-flags = [
-    ("TRUMP", "UNITED STATES", "us"),
-    ("XI", "CHINA", "cn"),
-    ("PUTIN", "RUSSIA", "ru"),
-]
-row_h = 122 // 3
-for i, (name, country, code) in enumerate(flags):
-    ry = fy + i * row_h
-    fw, fh = 92, 26
-    fx, fyy = fx0 + 10, ry + 7
-    if code == "us":
-        for s in range(7):
-            canvas.rectangle([fx, fyy + s * 4, fx + fw, fyy + s * 4 + 4],
-                             fill=RED if s % 2 == 0 else CREAM)
-        canvas.rectangle([fx, fyy, fx + 38, fyy + 14], fill=NAVY)
-        for dx in (6, 16, 26):
-            for dy in (4, 10):
-                canvas.ellipse([fx + dx, fyy + dy, fx + dx + 3,
-                                fyy + dy + 3], fill=CREAM)
-    elif code == "cn":
-        canvas.rectangle([fx, fyy, fx + fw, fyy + fh], fill=RED)
-        canvas.ellipse([fx + 8, fyy + 6, fx + 18, fyy + 16], fill=GOLD)
-        for dx, dy in ((30, 4), (38, 10), (30, 16), (22, 10)):
-            canvas.ellipse([fx + dx, fyy + dy, fx + dx + 4, fyy + dy + 4],
-                           fill=GOLD)
-    else:
-        canvas.rectangle([fx, fyy, fx + fw, fyy + 9], fill=CREAM)
-        canvas.rectangle([fx, fyy + 9, fx + fw, fyy + 18], fill=(0, 60, 160))
-        canvas.rectangle([fx, fyy + 18, fx + fw, fyy + fh], fill=RED)
-    canvas.text((fx + fw + 12, ry + 4), name, font=load(SANSB, 16), fill=INK)
-    canvas.text((fx + fw + 12, ry + 22), country, font=load(SANS, 12),
-                fill=GREY)
-    if i < 2:
-        canvas.line([(fx0 + 8, ry + row_h), (fx1 - 8, ry + row_h)],
-                    fill=GREY, width=1)
+CELLS = (
+    {
+        "kicker": "WAR  \u2022  UKRAINE",
+        "title": "KERCH: ONE TRACK BACK",
+        "body": "Road deck down \u2014 some 225 m in the sea. Trains resumed on "
+                "one track; ferries now carry the strait.",
+        "icon": "bridge",
+    },
+    {
+        "kicker": "BUSINESS  \u2022  WALL STREET",
+        "title": "ANTHROPIC\u2019S DAY-TWO SLIDE",
+        "body": "ANT drops about 10% to near $87 in Friday trade as AI shares "
+                "slide \u2014 still above the $83 IPO price.",
+        "icon": "chart",
+    },
+    {
+        "kicker": "CULTURE  \u2022  GAMES",
+        "title": "GTA VI: $2.36bn IN A DAY",
+        "body": "Sensor Tower counts 24.6m copies on day one \u2014 the biggest "
+                "entertainment launch ever. Unofficial.",
+        "icon": "city",
+    },
+    {
+        "kicker": "SCIENCE  \u2022  SPACE",
+        "title": "VOYAGER 1 PHONES HOME",
+        "body": "Light-day confirmed by carrier signal \u2014 but its data stream "
+                "halted on 14 Nov. Engineers investigate.",
+        "icon": "probe",
+    },
+)
 
-# ---------------------------------------------------------------- ICJ band
-iy0, iy1 = 596, 712
-canvas.rectangle([M, iy0, R, iy1], fill=NAVY)
-canvas.text((M + 16, iy0 + 10), "THE HAGUE  \u2022  INTERNATIONAL COURT OF JUSTICE",
-            font=load(SANSB, 15), fill=GOLD)
-centre("MYANMAR COMMITTED GENOCIDE",
-       shrink(BOLD, "MYANMAR COMMITTED GENOCIDE", R - M - 32, 38),
-       iy0 + 30, fill=CREAM)
-icj = ("Now the orders: prosecute the suspects, let the Rohingya return "
-       "in safety, restore property, pay compensation \u2014 with a "
-       "reparations plan due within two years. The Court cannot enforce "
-       "it; survivors press the Security Council. Naypyidaw is silent.")
-para(icj, load(REG, 16), M + 16, iy0 + 72, R - M - 32, 19, fill=CREAM)
+STORM_LINE = ("CYCLONE AKVAN ASHORE AT GOPALPUR \u2014 NO DEATHS, NO MAJOR "
+              "DAMAGE  \u2022  372,000 EVACUATED  \u2022  NOW A DEEP DEPRESSION")
 
-# ---------------------------------------------------------------- picture grid
-gy = 724
-col_w = (R - M - 24) // 2
-cell_h = 96
-lab_f = load(SANSB, 13)
-head_f = load(BOLD, 20)
-body_f = load(REG, 15)
+TICKER = ("FRIDAY CLOSE (20 NOV):  NIKKEI 56,437 \u22125.1%  \u2022  "
+          "KOSPI 4,870 \u22125.2%  \u2022  HANG SENG 22,411 \u22121.9%  "
+          "\u2022  FTSE 100 10,346 \u22121.0%  \u2022  DAX \u22122.1%  "
+          "\u2022  CAC 40 \u22121.6%")
 
+FOOT_LINE = ("WELLINGTON: Nicholls 175*, NZ 368; India 159/1 trail by 209  "
+             "\u2022  KERCH: free ferries cross the strait  \u2022  ODISHA: "
+             "orange rain alert, 14 districts, into Saturday")
 
-def cell(x0, y0, label, head, body, draw_icon):
-    canvas.rectangle([x0, y0, x0 + 96, y0 + cell_h - 8], outline=INK, width=1)
-    draw_icon(x0, y0)
-    tx = x0 + 108
-    canvas.text((tx, y0 + 2), label, font=lab_f, fill=RED)
-    canvas.text((tx, y0 + 20),
-                head if canvas.textlength(head, font=head_f) <= col_w - 108
-                else head, font=shrink(BOLD, head, col_w - 108, 20), fill=INK)
-    yy = y0 + 46
-    for ln in flow(body, body_f, col_w - 108)[:2]:
-        canvas.text((tx, yy), ln, font=body_f, fill=FAINT)
-        yy += 18
+# Section tops on the page, top to bottom.
+SECTION_TOP = {
+    "dateline": 168,
+    "lead": 214,
+    "court": 596,
+    "grid": 724,
+    "storm": 936,
+    "ticker": 980,
+    "foot": 1002,
+}
+
+# ---------------------------------------------------------------- canvas
 
 
-def icon_kerch(x0, y0):
-    canvas.rectangle([x0, y0, x0 + 96, y0 + 88], fill=(198, 222, 236))
-    canvas.rectangle([x0, y0 + 62, x0 + 96, y0 + 88], fill=(70, 110, 150))
-    canvas.line([(x0 + 6, y0 + 44), (x0 + 40, y0 + 44)], fill=INK, width=5)
-    canvas.line([(x0 + 58, y0 + 44), (x0 + 90, y0 + 44)], fill=INK, width=5)
-    canvas.line([(x0 + 14, y0 + 44), (x0 + 14, y0 + 62)], fill=INK, width=4)
-    canvas.line([(x0 + 80, y0 + 44), (x0 + 80, y0 + 62)], fill=INK, width=4)
-    canvas.arc([x0 + 40, y0 + 30, x0 + 58, y0 + 48], 180, 360, fill=RED,
-               width=3)
-    canvas.text((x0 + 42, y0 + 8), "!", font=load(SANSB, 22), fill=RED)
+class Page:
+    """A 1024x1024 newspaper page with text helpers."""
+
+    def __init__(self):
+        self.image = Image.new("RGB", (SIZE, SIZE), PALETTE["paper"])
+        self.pen = ImageDraw.Draw(self.image)
+        self._cache = {}
+
+    def font(self, kind, size):
+        key = (kind, size)
+        if key not in self._cache:
+            picked = None
+            for path in FONT_FILES[kind]:
+                if os.path.exists(path):
+                    picked = ImageFont.truetype(path, size)
+                    break
+            self._cache[key] = picked or ImageFont.load_default()
+        return self._cache[key]
+
+    def width_of(self, text, font):
+        return self.pen.textlength(text, font=font)
+
+    def fitted(self, kind, text, max_width, start_size, min_size=9):
+        size = start_size
+        while size > min_size:
+            candidate = self.font(kind, size)
+            if self.width_of(text, candidate) <= max_width:
+                return candidate
+            size -= 1
+        return self.font(kind, min_size)
+
+    def centered(self, text, font, top, color, spacing=0):
+        if spacing:
+            advance = [self.width_of(ch, font) + spacing for ch in text]
+            x = (SIZE - (sum(advance) - spacing)) / 2
+            for ch, step in zip(text, advance):
+                self.pen.text((x, top), ch, font=font, fill=color)
+                x += step
+            return
+        x = (SIZE - self.width_of(text, font)) / 2
+        self.pen.text((x, top), text, font=font, fill=color)
+
+    def wrapped(self, text, font, max_width):
+        lines = []
+        current = ""
+        for word in text.split():
+            trial = word if not current else current + " " + word
+            if self.width_of(trial, font) <= max_width:
+                current = trial
+            else:
+                lines.append(current)
+                current = word
+        if current:
+            lines.append(current)
+        return lines
+
+    def paragraph(self, text, font, left, top, max_width, leading, color,
+                  centered=False):
+        y = top
+        for line in self.wrapped(text, font, max_width):
+            if centered:
+                x = left + (max_width - self.width_of(line, font)) / 2
+            else:
+                x = left
+            self.pen.text((x, y), line, font=font, fill=color)
+            y += leading
+        return y
+
+    def hline(self, top, weight, color, left=EDGE, right=RIGHT):
+        self.pen.line([(left, top), (right, top)], fill=color, width=weight)
 
 
-def icon_anthropic(x0, y0):
-    canvas.rectangle([x0, y0, x0 + 96, y0 + 88], fill=CREAM)
-    bars = [(8, 30), (24, 44), (40, 58), (56, 40), (72, 28)]
-    for bx, bh in bars:
-        canvas.rectangle([x0 + bx, y0 + 78 - bh, x0 + bx + 12, y0 + 78],
-                         fill=TEAL if bx < 56 else RED)
-    canvas.line([(x0 + 6, y0 + 18), (x0 + 30, y0 + 34), (x0 + 52, y0 + 20),
-                 (x0 + 88, y0 + 52)], fill=NAVY, width=3)
-    canvas.text((x0 + 8, y0 + 4), "$", font=load(SANSB, 18), fill=NAVY)
+# ---------------------------------------------------------------- flags
 
 
-def icon_gta(x0, y0):
-    canvas.rectangle([x0, y0, x0 + 96, y0 + 88], fill=(58, 24, 96))
-    canvas.ellipse([x0 + 58, y0 + 8, x0 + 88, y0 + 38], fill=(255, 150, 60))
-    for bx, bw, bh in ((6, 16, 34), (26, 12, 48), (42, 18, 28),
-                       (64, 12, 40), (80, 12, 24)):
-        canvas.rectangle([x0 + bx, y0 + 88 - bh, x0 + bx + bw, y0 + 88],
-                         fill=(20, 8, 40))
-        for wy in range(y0 + 88 - bh + 5, y0 + 84, 9):
-            canvas.rectangle([x0 + bx + 3, wy, x0 + bx + 7, wy + 4],
-                             fill=GOLD)
+def paint_stars(page, x, y, w, h):
+    stripe = h / 7
+    for i in range(7):
+        tone = PALETTE["accent"] if i % 2 == 0 else PALETTE["cream"]
+        page.pen.rectangle([x, y + i * stripe, x + w, y + (i + 1) * stripe],
+                           fill=tone)
+    canton_w, canton_h = w * 0.42, stripe * 4
+    page.pen.rectangle([x, y, x + canton_w, y + canton_h], fill=PALETTE["deep"])
+    for row in range(2):
+        for col in range(3):
+            cx = x + 6 + col * 10
+            cy = y + 4 + row * 6
+            page.pen.ellipse([cx, cy, cx + 3, cy + 3], fill=PALETTE["cream"])
 
 
-def icon_voyager(x0, y0):
-    canvas.rectangle([x0, y0, x0 + 96, y0 + 88], fill=NAVY)
-    for sx, sy in ((10, 12), (30, 30), (52, 8), (74, 22), (86, 48),
-                   (18, 52), (44, 62), (66, 70), (88, 76), (8, 76)):
-        canvas.ellipse([x0 + sx, y0 + sy, x0 + sx + 3, y0 + sy + 3],
-                       fill=CREAM)
+def paint_red(page, x, y, w, h):
+    page.pen.rectangle([x, y, x + w, y + h], fill=PALETTE["accent"])
+    page.pen.ellipse([x + 8, y + 6, x + 18, y + 16], fill=PALETTE["gold"])
+    for dx, dy in ((30, 4), (38, 10), (30, 16), (22, 10)):
+        page.pen.ellipse([x + dx, y + dy, x + dx + 4, y + dy + 4],
+                         fill=PALETTE["gold"])
+
+
+def paint_bands(page, x, y, w, h):
+    third = h / 3
+    tones = (PALETTE["cream"], PALETTE["royal"], PALETTE["accent"])
+    for i, tone in enumerate(tones):
+        page.pen.rectangle([x, y + i * third, x + w, y + (i + 1) * third],
+                           fill=tone)
+
+
+FLAG_PAINTERS = {"stars": paint_stars, "red": paint_red, "bands": paint_bands}
+
+# ---------------------------------------------------------------- icons
+
+
+def paint_bridge(page, x, y):
+    pen = page.pen
+    pen.rectangle([x, y, x + 96, y + 88], fill=PALETTE["sky"])
+    pen.rectangle([x, y + 62, x + 96, y + 88], fill=PALETTE["sea"])
+    pen.line([(x + 14, y + 44), (x + 14, y + 62)], fill=PALETTE["ink"], width=4)
+    pen.line([(x + 80, y + 44), (x + 80, y + 62)], fill=PALETTE["ink"], width=4)
+    pen.line([(x + 6, y + 44), (x + 40, y + 44)], fill=PALETTE["ink"], width=5)
+    pen.line([(x + 58, y + 44), (x + 90, y + 44)], fill=PALETTE["ink"], width=5)
+    pen.arc([x + 40, y + 30, x + 58, y + 48], 180, 360, fill=PALETTE["accent"],
+            width=3)
+    pen.text((x + 42, y + 8), "!", font=page.font("sans_bold", 22),
+             fill=PALETTE["accent"])
+
+
+def paint_chart(page, x, y):
+    pen = page.pen
+    pen.rectangle([x, y, x + 96, y + 88], fill=PALETTE["cream"])
+    pen.line([(x + 10, y + 10), (x + 10, y + 78)], fill=PALETTE["muted"], width=2)
+    pen.line([(x + 10, y + 78), (x + 90, y + 78)], fill=PALETTE["muted"], width=2)
+    points = [(14, 30), (30, 46), (46, 34), (62, 52), (86, 24)]
+    absolute = [(x + px, y + py) for px, py in points]
+    pen.line(absolute, fill=PALETTE["deep"], width=3)
+    for px, py in absolute:
+        pen.ellipse([px - 3, py - 3, px + 3, py + 3], fill=PALETTE["accent"])
+    pen.text((x + 66, y + 6), "$", font=page.font("sans_bold", 18),
+             fill=PALETTE["deep"])
+
+
+def paint_city(page, x, y):
+    pen = page.pen
+    pen.rectangle([x, y, x + 96, y + 88], fill=PALETTE["night"])
+    pen.ellipse([x + 58, y + 8, x + 88, y + 38], fill=PALETTE["sunset"])
+    towers = ((6, 16, 34), (26, 12, 48), (42, 18, 28), (64, 12, 40), (80, 12, 24))
+    for bx, bw, bh in towers:
+        pen.rectangle([x + bx, y + 88 - bh, x + bx + bw, y + 88],
+                      fill=PALETTE["dusk"])
+        wy = y + 88 - bh + 5
+        while wy < y + 84:
+            pen.rectangle([x + bx + 3, wy, x + bx + 7, wy + 4],
+                          fill=PALETTE["gold"])
+            wy += 9
+
+
+def paint_probe(page, x, y):
+    pen = page.pen
+    pen.rectangle([x, y, x + 96, y + 88], fill=PALETTE["deep"])
+    stars = ((10, 12), (30, 30), (52, 8), (74, 22), (86, 48),
+             (18, 52), (44, 62), (66, 70), (88, 76), (8, 76))
+    for sx, sy in stars:
+        pen.ellipse([x + sx, y + sy, x + sx + 3, y + sy + 3],
+                    fill=PALETTE["cream"])
+    pen.ellipse([x + 40, y + 30, x + 56, y + 46], fill=PALETTE["gold"])
+    pen.line([(x + 56, y + 38), (x + 70, y + 26)], fill=PALETTE["gold"], width=2)
     for i in range(5):
-        canvas.line([(x0 + 12 + i * 14, y0 + 66), (x0 + 18 + i * 14, y0 + 66)],
-                    fill=GOLD, width=2)
-    canvas.ellipse([x0 + 40, y0 + 30, x0 + 56, y0 + 46], fill=GOLD)
-    canvas.line([(x0 + 56, y0 + 38), (x0 + 70, y0 + 26)], fill=GOLD, width=2)
+        sx = x + 12 + i * 14
+        pen.line([(sx, y + 66), (sx + 6, y + 66)], fill=PALETTE["gold"], width=2)
 
 
-cell(M, gy, "WAR  \u2022  UKRAINE", "KERCH: ONE TRACK BACK",
-     "Road deck down \u2014 some 225 m in the sea. Trains resumed on "
-     "one track; ferries now carry the strait.", icon_kerch)
-cell(M + col_w + 24, gy, "BUSINESS  \u2022  WALL STREET",
-     "ANTHROPIC\u2019S DAY-TWO SLIDE",
-     "ANT drops about 10% to near $87 in Friday trade as AI shares "
-     "slide \u2014 still above the $83 IPO price.", icon_anthropic)
-cell(M, gy + cell_h + 8, "CULTURE  \u2022  GAMES", "GTA VI: $2.36bn IN A DAY",
-     "Sensor Tower counts 24.6m copies on day one \u2014 the biggest "
-     "entertainment launch ever. Unofficial.", icon_gta)
-cell(M + col_w + 24, gy + cell_h + 8, "SCIENCE  \u2022  SPACE",
-     "VOYAGER 1 PHONES HOME",
-     "Light-day confirmed by carrier signal \u2014 but its data stream "
-     "halted on 14 Nov. Engineers investigate.", icon_voyager)
+ICON_PAINTERS = {
+    "bridge": paint_bridge,
+    "chart": paint_chart,
+    "city": paint_city,
+    "probe": paint_probe,
+}
 
-# ---------------------------------------------------------------- Akvan strip
-ay = 936
-canvas.rectangle([M, ay, R, ay + 34], fill=AMBER)
-akvan = ("CYCLONE AKVAN ASHORE AT GOPALPUR \u2014 NO DEATHS, NO MAJOR DAMAGE  "
-         "\u2022  372,000 EVACUATED  \u2022  NOW A DEEP DEPRESSION")
-centre(akvan, shrink(SANSB, akvan, R - M, 15, floor=11), ay + 9, fill=CREAM)
+# ---------------------------------------------------------------- sections
 
-# ---------------------------------------------------------------- markets
-my = 980
-tick = ("FRIDAY CLOSE (20 NOV):  NIKKEI 56,437 \u22125.1%  \u2022  "
-        "KOSPI 4,870 \u22125.2%  \u2022  HANG SENG 22,411 \u22121.9%  "
-        "\u2022  FTSE 100 10,346 \u22121.0%  \u2022  DAX \u22122.1%  "
-        "\u2022  CAC 40 \u22121.6%")
-centre(tick, shrink(SANS, tick, R - M, 14), my, fill=FAINT)
 
-# ---------------------------------------------------------------- footer briefs
-fy = 1002
-brief = ("WELLINGTON: Nicholls 175*, NZ 368; India 159/1 trail by 209  "
-         "\u2022  KERCH: free ferries cross the strait  \u2022  ODISHA: "
-         "orange rain alert, 14 districts, into Saturday")
-centre(brief, shrink(SANS, brief, R - M, 12), fy, fill=GREY)
+def draw_masthead(page):
+    small = page.font("sans_bold", 15)
+    ink = PALETTE["ink"]
+    page.pen.text((EDGE, 14), "THE WORLD IN ONE PAGE", font=small, fill=ink)
+    tag = "No. 20  \u2022  EVENING EDITION"
+    page.pen.text((RIGHT - page.width_of(tag, small), 14), tag, font=small,
+                  fill=ink)
+    page.hline(40, 2, ink)
+    title = "The World in a Day"
+    page.centered(title, page.fitted("black", title, SPAN, 84), 46, ink)
+    page.hline(148, 6, ink)
+    page.hline(158, 2, ink)
+    top = SECTION_TOP["dateline"]
+    page.pen.rectangle([EDGE, top, RIGHT, top + 36], fill=ink)
+    page.centered("FRIDAY, 20 NOVEMBER 2026", page.font("sans_bold", 22),
+                  top + 7, PALETTE["cream"], spacing=2)
 
-img.save(OUT, optimize=True)
-print("saved", OUT)
+
+def draw_lead(page):
+    top = SECTION_TOP["lead"]
+    ink = PALETTE["ink"]
+    page.pen.text((EDGE, top + 4), LEAD["kicker"],
+                  font=page.font("sans_bold", 17), fill=PALETTE["accent"])
+    first, second = LEAD["headline"]
+    page.centered(first, page.fitted("black", first, SPAN, 78), top + 28, ink)
+    page.centered(second, page.fitted("black", second, SPAN, 78), top + 104, ink)
+    page.paragraph(LEAD["standfirst"], page.font("serif_italic", 21),
+                   EDGE + 30, top + 186, SPAN - 60, 27, ink, centered=True)
+
+    points_top = top + 248
+    body_font = page.font("serif", 18)
+    y = points_top
+    for point in LEAD["points"]:
+        page.pen.text((EDGE, y), "\u2022", font=body_font,
+                      fill=PALETTE["accent"])
+        y = page.paragraph(point, body_font, EDGE + 18, y, 560, 23, ink)
+        y += 6
+
+    panel_x, panel_w, panel_h = 640, RIGHT - 640, 122
+    page.pen.rectangle([panel_x, points_top, RIGHT, points_top + panel_h],
+                       outline=ink, width=2)
+    row_h = panel_h // 3
+    for i, (name, country, flag) in enumerate(LEAD["leaders"]):
+        row_top = points_top + i * row_h
+        FLAG_PAINTERS[flag](page, panel_x + 10, row_top + 7, 92, 26)
+        page.pen.text((panel_x + 114, row_top + 4), name,
+                      font=page.font("sans_bold", 16), fill=ink)
+        page.pen.text((panel_x + 114, row_top + 22), country,
+                      font=page.font("sans", 12), fill=PALETTE["muted"])
+        if i < 2:
+            page.hline(row_top + row_h, 1, PALETTE["muted"],
+                       left=panel_x + 8, right=RIGHT - 8)
+
+
+def draw_court(page):
+    top = SECTION_TOP["court"]
+    page.pen.rectangle([EDGE, top, RIGHT, top + 116], fill=PALETTE["deep"])
+    page.pen.text((EDGE + 16, top + 10), COURT["kicker"],
+                  font=page.font("sans_bold", 15), fill=PALETTE["gold"])
+    headline = COURT["headline"]
+    page.centered(headline,
+                  page.fitted("serif_bold", headline, SPAN - 32, 38),
+                  top + 30, PALETTE["cream"])
+    page.paragraph(COURT["body"], page.font("serif", 16), EDGE + 16,
+                   top + 72, SPAN - 32, 19, PALETTE["cream"])
+
+
+def draw_cells(page):
+    top = SECTION_TOP["grid"]
+    col_w = (SPAN - 24) // 2
+    cell_h = 96
+    positions = ((EDGE, top), (EDGE + col_w + 24, top),
+                 (EDGE, top + cell_h + 8), (EDGE + col_w + 24, top + cell_h + 8))
+    for cell_data, (x0, y0) in zip(CELLS, positions):
+        page.pen.rectangle([x0, y0, x0 + 96, y0 + cell_h - 8],
+                           outline=PALETTE["ink"], width=1)
+        ICON_PAINTERS[cell_data["icon"]](page, x0, y0)
+        tx = x0 + 108
+        page.pen.text((tx, y0 + 2), cell_data["kicker"],
+                      font=page.font("sans_bold", 13), fill=PALETTE["accent"])
+        title = cell_data["title"]
+        page.pen.text((tx, y0 + 20), title,
+                      font=page.fitted("serif_bold", title, col_w - 108, 20),
+                      fill=PALETTE["ink"])
+        lines = page.wrapped(cell_data["body"], page.font("serif", 15),
+                             col_w - 108)[:2]
+        yy = y0 + 46
+        for line in lines:
+            page.pen.text((tx, yy), line, font=page.font("serif", 15),
+                          fill=PALETTE["body"])
+            yy += 18
+
+
+def draw_storm_and_foot(page):
+    top = SECTION_TOP["storm"]
+    page.pen.rectangle([EDGE, top, RIGHT, top + 34], fill=PALETTE["amber"])
+    page.centered(STORM_LINE,
+                  page.fitted("sans_bold", STORM_LINE, SPAN, 15, min_size=11),
+                  top + 9, PALETTE["cream"])
+    ticker_top = SECTION_TOP["ticker"]
+    page.centered(TICKER, page.fitted("sans", TICKER, SPAN, 14), ticker_top,
+                  PALETTE["body"])
+    foot_top = SECTION_TOP["foot"]
+    page.centered(FOOT_LINE, page.fitted("sans", FOOT_LINE, SPAN, 12),
+                  foot_top, PALETTE["muted"])
+
+
+def bake():
+    page = Page()
+    draw_masthead(page)
+    draw_lead(page)
+    draw_court(page)
+    draw_cells(page)
+    draw_storm_and_foot(page)
+    here = os.path.dirname(os.path.abspath(__file__))
+    target = os.path.join(here, "entry.png")
+    page.image.save(target, optimize=True)
+    print("saved", target)
+
+
+if __name__ == "__main__":
+    bake()
